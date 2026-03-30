@@ -8,10 +8,13 @@ on:
   schedule:
     - cron: '0 */1 * * *'
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true  # 提前适配 Node.js 24，避免 2026-06-02 强制切换后出错
+
 jobs:
   build:
     if: |
-      github.event_name == 'workflow_dispatch' || 
+      github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'schedule' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
 
@@ -29,14 +32,14 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "latest"
+          node-version: "20"  # 固定版本，避免 "latest" 将来引发意外的破坏性更新
 
       - name: Install dependencies
         run: npm install --production
 
       - name: Type check
         run: npm run check
-        
+
       - name: Build project
         run: npm run build
 
@@ -44,11 +47,11 @@ jobs:
         id: read_release
         shell: bash
         run: |
-          r=$(cat RELEASE.md)         
-          r="${r//'%'/'%25'}"                               
-          r="${r//$'\n'/'%0A'}"                             
-          r="${r//$'\r'/'%0D'}"                             
-          echo "RELEASE_BODY=$r" >> $GITHUB_OUTPUT          
+          r=$(cat RELEASE.md)
+          r="${r//'%'/'%25'}"
+          r="${r//$'\n'/'%0A'}"
+          r="${r//$'\r'/'%0D'}"
+          echo "RELEASE_BODY=$r" >> $GITHUB_OUTPUT
 
       - name: Upload Release Assets
         uses: svenstaro/upload-release-action@v2
